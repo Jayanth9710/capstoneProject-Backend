@@ -6,10 +6,10 @@ const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const mongoClient = mongodb.MongoClient;
 const dotenv = require("dotenv")
-dotenv.config();
+
 const PORT = process.env.PORT || 3000;
 const url = process.env.MONGO_URI;
-
+dotenv.config();
 app.use(cors({
     origin: "*"
 }))
