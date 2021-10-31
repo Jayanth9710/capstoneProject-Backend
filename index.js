@@ -143,7 +143,7 @@ app.get("/list-all-rooms", async function (req, res) {
 })
 
 
-app.post("/create-room", async function (req, res) {
+app.post("/create-room",[authenticate], async function (req, res) {
     try {
         // Connect the Database
         let client = await mongoClient.connect(url)
@@ -171,7 +171,7 @@ app.post("/create-room", async function (req, res) {
 
 })
 
-app.get("/booked-rooms/:id",async function (req,res) {
+app.get("/booked-rooms/:id",[authenticate],async function (req,res) {
     try {
         console.log(req.params.id)
         // Connect the Database
@@ -193,7 +193,7 @@ app.get("/booked-rooms/:id",async function (req,res) {
     }
 })
 
-app.get("/roomsbooked",async function (req,res) {
+app.get("/roomsbooked",[authenticate],async function (req,res) {
     try {
         
         // Connect the Database
