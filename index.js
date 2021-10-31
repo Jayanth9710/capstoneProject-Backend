@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken");
 const mongoClient = mongodb.MongoClient;
 const dotenv = require("dotenv")
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.port || 3000;
 const url = process.env.MONGO_URI;
 dotenv.config();
 app.use(cors({
