@@ -6,10 +6,10 @@ const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const mongoClient = mongodb.MongoClient;
 const dotenv = require("dotenv")
-
+dotenv.config();
 const PORT = process.env.PORT || 3000;
 const url = process.env.MONGO_URI;
-dotenv.config();
+
 app.use(cors({
     origin: "*"
 }))
@@ -41,7 +41,7 @@ function authenticate(req, res, next) {
         })
     }
     } catch (error) {
-        console.log(error)
+        console.log("error1")
         res.status(500).json({
             message: "Internal Server Error"
         })
@@ -64,16 +64,18 @@ app.post("/register", async function (req, res) {
 
         // Select the Collection and perform the action
         let data = await db.collection("airbnb_users").insertOne(req.body)
+        
 
+        
         // Close the Connection
         await client.close();
-
         res.json({
             message: "User Registered",
             id: data._id
         })
+        
     } catch (error) {
-
+console.log(error)
     }
 })
 
@@ -114,7 +116,7 @@ app.post("/login", async function (req, res) {
         }
 
     } catch (error) {
-        console.log(error)
+        console.log("error3")
     }
 })
 
@@ -139,6 +141,7 @@ app.get("/list-all-rooms", async function (req, res) {
         res.status(500).json({
             message: "Something went wrong"
         })
+        console.log("error4")
     }
 })
 
@@ -163,7 +166,7 @@ app.post("/create-room",[authenticate], async function (req, res) {
             message: "Room Added"
         })
     } catch (error) {
-        console.log(error)
+        console.log("error5")
         res.status(500).json({
             message: "Something went wrong"
         })
@@ -176,20 +179,27 @@ app.get("/booked-rooms/:id",[authenticate],async function (req,res) {
         console.log(req.params.id)
         // Connect the Database
         let client = await mongoClient.connect(url);
-
+        // req.body.userid = req.userid;
         // Select the DB
         let db = client.db("airbnbClone");
-
+        
         //Select the Collection and perform the action
+        
         let data = await db.collection("roominfos").find({_id:mongodb.ObjectId(req.params.id)}).toArray();
-        let bookeddata = await db.collection("bookedrooms").insertMany({_id:mongodb.ObjectId(req.params.id)}).toArray();
-        console.log(data)
+        data[0].isbooked=true;
+        let update = await db.collection("roominfos")
+        .findOneAndUpdate({ _id: mongodb.ObjectId(req.params.id) }, { $set: data[0] })
+        console.log(data);
+        data[0].userid=req.userid;
+        console.log("-----------------------------------------------------------------------------")
+        let bookeddata = await db.collection("bookedrooms").insertMany(data);
+        
         // Close the Connection
         await client.close();
 
         res.json(data);
     } catch (error) {
-        
+        console.log(error)
     }
 })
 
@@ -202,16 +212,17 @@ app.get("/roomsbooked",[authenticate],async function (req,res) {
         // Select the DB
         let db = client.db("airbnbClone");
 
+        
         //Select the Collection and perform the action
-        let data = await db.collection("roominfos").find({}).toArray();
+        let data = await db.collection("bookedrooms").find({userid:req.userid}).toArray();
         console.log("roomsbooked");
-        console.log(data)
+        
         // Close the Connection
         await client.close();
 
         res.json(data);
     } catch (error) {
-        
+        console.log("error7")
     }
 })
 
@@ -239,6 +250,7 @@ app.put("/update-room/:id",[authenticate], async function (req, res) {
         res.status(500).json({
             message: "Something Went Wrong"
         })
+        console.log("error8")
     }
 })
 
@@ -265,6 +277,7 @@ app.delete("/delete-room/:id",[authenticate], async function (req, res) {
         res.status(500).json({
             message: "Something Went Wrong"
         })
+        console.log("error9")
     }
 })
 
