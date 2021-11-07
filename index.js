@@ -88,7 +88,7 @@ app.post("/login", async function (req, res) {
         let db = client.db("airbnbClone");
 
         // Find the user 
-        let user = await db.collection("airbnb_users").findOne({ username: req.body.username });
+        let user = await db.collection("airbnb_users").findOne({ email: req.body.email });
 
         if (user) {
             // Hash the incoming password
@@ -174,12 +174,12 @@ app.post("/create-room",[authenticate], async function (req, res) {
 
 })
 
-app.get("/booked-rooms/:id",[authenticate],async function (req,res) {
+app.get("/booked-rooms/:id/:startDate/:endDate/:days",[authenticate],async function (req,res) {
     try {
-        console.log(req.params.id)
+        
         // Connect the Database
         let client = await mongoClient.connect(url);
-        // req.body.userid = req.userid;
+        
         // Select the DB
         let db = client.db("airbnbClone");
         
@@ -187,6 +187,10 @@ app.get("/booked-rooms/:id",[authenticate],async function (req,res) {
         
         let data = await db.collection("roominfos").find({_id:mongodb.ObjectId(req.params.id)}).toArray();
         data[0].isbooked=true;
+        data[0].startdate=req.params.startDate;
+        data[0].enddate=req.params.endDate;
+        // data[0].customername=req.params.username;
+        data[0].days=req.params.days
         let update = await db.collection("roominfos")
         .findOneAndUpdate({ _id: mongodb.ObjectId(req.params.id) }, { $set: data[0] })
         console.log(data);
@@ -199,7 +203,7 @@ app.get("/booked-rooms/:id",[authenticate],async function (req,res) {
 
         res.json(data);
     } catch (error) {
-        console.log(error)
+        console.log("room-book-error")
     }
 })
 
