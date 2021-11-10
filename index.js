@@ -145,6 +145,30 @@ app.get("/list-all-rooms", async function (req, res) {
     }
 })
 
+app.get("/s/pondy", async function (req, res) {
+    try {
+        // Connect the Database
+        let client = await mongoClient.connect(url)
+
+        // Select the DB
+        let db = client.db("airbnbClone");
+
+        // Select the collection and perform action
+        let data = await db.collection("roominfos").find(({location:{$regex:/^pondicherry$/i}})).toArray();
+        
+console.log(data)
+        // Close the Connection
+        client.close();
+
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({
+            message: "Something went wrong"
+        })
+        console.log("error4")
+    }
+})
+
 
 app.post("/create-room",[authenticate], async function (req, res) {
     try {
