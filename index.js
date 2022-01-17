@@ -7,14 +7,80 @@ const jwt = require("jsonwebtoken");
 const mongoClient = mongodb.MongoClient;
 const dotenv = require("dotenv")
 dotenv.config();
+const Razorpay = require('razorpay')
+const shortid = require('shortid')
+
 const PORT = process.env.PORT || 3000;
 const url = process.env.MONGO_URI;
 
-app.use(cors({
-    origin: "*"
-}))
+const corsOptions ={
+    origin:'*', 
+    credentials:true,            //access-control-allow-credentials:true
+    optionSuccessStatus:200
+}
+app.use(cors(corsOptions));
 
 app.use(express.json());
+
+//Payment//
+const razorpay = new Razorpay({
+    key_id: process.env.RAZOR_PAY_KEY_ID,
+    key_secret: process.env.RAZOR_PAY_KEY_SECRET,
+  });
+
+app.use(express.json());
+app.use(express.urlencoded({
+    extended: true
+  }));
+
+
+app.post('/verification',(req,res) => {
+    //Validation
+const secret = process.env.RAZOR_PAY_VERIFICATION_SECRET
+console.log(req.body)
+const crypto = require('crypto')
+
+	const shasum = crypto.createHmac('sha256', secret)
+	shasum.update(JSON.stringify(req.body))
+	const digest = shasum.digest('hex')
+
+	console.log(digest, req.headers['x-razorpay-signature'])
+
+	if (digest === req.headers['x-razorpay-signature']) {
+		console.log('request is legit')
+		// process it
+		
+	} else {
+		// pass it
+	}
+
+    res.json({status:'Okay'})
+})
+
+app.post('/rooms/:id', async (req,res) => {
+    const payment_capture = 1
+    const amount = parseInt(req.body.totalPrice),
+    currency = 'INR'
+    const options = {
+        amount: Number(amount *100),
+        currency,
+        receipt:shortid.generate(),
+        payment_capture
+      }
+
+try {
+    const response = await razorpay.orders.create(options)
+    console.log(response)
+    res.json({
+        id: response.id,
+        currency: response.currency,
+        amount: response.amount
+    })
+} catch (error) {
+    console.log(error)
+}
+    
+} )
 
 
 function authenticate(req, res, next) {
@@ -101,7 +167,8 @@ app.post("/login", async function (req, res) {
                 let token = jwt.sign({ id: user._id }, process.env.JWT_SECRET)
                 res.json({
                     message: true,
-                    token
+                    token,
+                    user:user.username
                 })
             } else {
                 res.status(404).json({
@@ -144,6 +211,30 @@ app.get("/list-all-rooms", async function (req, res) {
         console.log("error4")
     }
 })
+app.get("/rooms/:id", async function (req, res) {
+    try {
+        // Connect the Database
+        let client = await mongoClient.connect(url)
+
+        // Select the DB
+        let db = client.db("airbnbClone");
+
+        // Select the collection and perform action
+        let data = await db.collection("roominfos").find( {_id:mongodb.ObjectId(req.params.id)}).toArray();
+        console.log(req.params.id)
+        
+
+        // Close the Connection
+        client.close();
+
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({
+            message: "Something went wrong"
+        })
+        console.log("error4")
+    }
+})
 
 app.get("/s/pondy", async function (req, res) {
     try {
@@ -156,7 +247,54 @@ app.get("/s/pondy", async function (req, res) {
         // Select the collection and perform action
         let data = await db.collection("roominfos").find(({location:{$regex:/^pondicherry$/i}})).toArray();
         
-console.log(data)
+// console.log(data)
+        // Close the Connection
+        client.close();
+
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({
+            message: "Something went wrong"
+        })
+        console.log("error4")
+    }
+})
+app.get("/s/ooty", async function (req, res) {
+    try {
+        // Connect the Database
+        let client = await mongoClient.connect(url)
+
+        // Select the DB
+        let db = client.db("airbnbClone");
+
+        // Select the collection and perform action
+        let data = await db.collection("roominfos").find(({location:{$regex:/^Ooty$/i}})).toArray();
+        
+// console.log(data)
+        // Close the Connection
+        client.close();
+
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({
+            message: "Something went wrong"
+        })
+        console.log("error4")
+    }
+})
+
+app.get("/s/chennai", async function (req, res) {
+    try {
+        // Connect the Database
+        let client = await mongoClient.connect(url)
+
+        // Select the DB
+        let db = client.db("airbnbClone");
+
+        // Select the collection and perform action
+        let data = await db.collection("roominfos").find(({location:{$regex:/^Chennai$/i}})).toArray();
+        
+// console.log(data)
         // Close the Connection
         client.close();
 
@@ -230,6 +368,29 @@ app.get("/booked-rooms/:id/:startDate/:endDate/:days",[authenticate],async funct
         console.log("room-book-error")
     }
 })
+
+// app.get("/rooms/:id",[authenticate],async function (req,res){
+//     try {
+
+//         // Connect the Database
+//         let client = await mongoClient.connect(url);
+
+//         // Select the DB
+//         let db = client.db("airbnbClone");
+
+//         //Select the Collection and perform the action.
+
+//         let data = await db.collection("roominfos").find({_id:mongodb.ObjectId(req.params.id)}).toArray();
+
+//         // Close the Connection
+//         client.close();
+
+//         res.json(data);
+        
+//     } catch (error) {
+//         console.log(error)
+//     }
+// }) 
 
 app.get("/roomsbooked",[authenticate],async function (req,res) {
     try {
