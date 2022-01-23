@@ -404,7 +404,7 @@ app.get("/roomsbooked",[authenticate],async function (req,res) {
         
         //Select the Collection and perform the action
         let data = await db.collection("bookedrooms").find({userid:req.userid}).toArray();
-        console.log("roomsbooked");
+        console.log(data);
         
         // Close the Connection
         await client.close();
@@ -453,9 +453,28 @@ app.delete("/delete-room/:id",[authenticate], async function (req, res) {
         let db = client.db("airbnbClone")
 
         // Select the Collection and perform the action
-        let data = await db.collection("roominfos")
-            .findOneAndDelete({ _id: mongodb.ObjectId(req.params.id) })
 
+//         //Finding the room and updating in DB
+//         let roomData = await db.collection("roominfos").find({ _id: mongodb.ObjectId(req.params.id) }).toArray();
+//         data[0].isbooked=false;
+    
+// console.log(req.params.id);
+
+let update =  db.collection("roominfos")
+.findOneAndUpdate({ _id: mongodb.ObjectId(req.params.id) }, { $set: { isbooked:false } },function(err, doc){
+    if(err){
+        console.log("Something wrong when updating data!");
+    }
+
+    console.log(doc);
+})
+
+
+        // Deleting the booked rooms details 
+        let data = await db.collection("bookedrooms")
+            .findOneAndDelete({ userid : req.userid })
+
+            console.log(req.userid);
         // Close the Connection
         await client.close();
 
@@ -467,6 +486,8 @@ app.delete("/delete-room/:id",[authenticate], async function (req, res) {
             message: "Something Went Wrong"
         })
         console.log("error9")
+        console.log(req.userid);
+        console.log(req.params.id);
     }
 })
 
